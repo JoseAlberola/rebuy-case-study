@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Product;
+use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use PhpParser\Node\Name;
@@ -19,31 +20,40 @@ class ProductsController extends AbstractController
         Listas todos los productos usando el metodo findAll() del repositorio de productos. 
     */
     #[Route(path: '/products', name: 'products', methods: ['GET'])]
-    public function list(): Response
+    public function list(ProductRepository $productRepository): Response
     {
-        // return new Response('Welcome to Latte and Code ', Response::HTTP_CREATED);
-        // $product = new Product();
-        // $products = $product
-        /*return new JsonResponse(
+        $products = $productRepository->findAll();
+        $productsArray = [];
+        foreach ($products as $product){
+            $productsArray[] = [
+                'id' => $product->getId(),
+                'ean' => $product->getEan(),
+                'name' => $product->getName(),
+                'price' => $product->getPrice(),
+                'category' => $product->getCategory()->getName(),
+                'manufacturer' => $product->getManufacturer()->getName()
+            ];
+        };
+        
+        return new JsonResponse(
             [
                 'message' => 'All products',
-                'products' => [ 
-                ]
-            ], Response::HTTP_CREATED);*/
-        return new Response('<h1 style="color:red">Hola don pepito</h1>');
+                'products' => $productsArray
+            ], Response::HTTP_OK);
     }
 
     /*
     TO DO
-        - Descargar Postman
         - Ver como recoger los datos del producto de un objeto JSON en la peticion
         - Organizar el codigo entre Modelo y Controlador 
     */
-    #[Route(path: '/products/new', name: 'create_product', methods: ['GET'])]
+    #[Route(path: '/products/new', name: 'create_product', methods: ['POST'])]
     public function create(Request $request, EntityManagerInterface $em): Response
     {
         $product = new Product();
         $response = new JsonResponse();
+        $object = $request->getContent();
+        /*
         $name = $request->get('name', null);
         $price = $request->get('price', null);
         if(!empty($name) && !empty($price)){
@@ -77,5 +87,7 @@ class ProductsController extends AbstractController
             ]);
         }
         return $response;
+        */
+        return new Response($object);
     }
 }
