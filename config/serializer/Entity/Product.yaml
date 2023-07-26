@@ -1,0 +1,14 @@
+App\Entity\Product:
+    attributes:
+        id:
+            groups: ['product']
+        ean:
+            groups: ['product']
+        name:
+            groups: ['product']
+        price:
+            groups: ['product']
+        category:
+            groups: ['product']
+        manufacturer:
+            groups: ['product']
