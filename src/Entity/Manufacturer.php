@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use App\Form\Model\CategoryDTO;
+use App\Form\Model\ManufacturerDTO;
 use App\Repository\ManufacturerRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -71,5 +73,13 @@ class Manufacturer
         }
 
         return $this;
+    }
+
+    public static function createFromManufacturerDTO(ManufacturerDTO $manufacturerDTO) : self {
+        $manufacturer = new self();
+        $manufacturer->id = $manufacturerDTO->id;
+        $manufacturer->name = $manufacturerDTO->name;
+        $manufacturer->products = $manufacturerDTO->products;
+        return $manufacturer;
     }
 }

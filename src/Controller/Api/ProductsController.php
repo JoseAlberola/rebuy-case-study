@@ -3,14 +3,16 @@
 namespace App\Controller\Api;
 
 use App\Entity\Product;
-use App\Entity\Category;
-use App\Entity\Manufacturer;
+use App\Form\Model\ProductDTO;
+use App\Form\Type\ProductFormType;
 use App\Repository\CategoryRepository;
 use App\Repository\ManufacturerRepository;
 use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class ProductsController extends AbstractFOSRestController
 {
@@ -30,21 +32,53 @@ class ProductsController extends AbstractFOSRestController
      * @Rest\Post(path="/products")
      * @Rest\View(serializerGroups={"product"}, serializerEnableMaxDepthChecks=true)
      */
-    public function create(ProductRepository $productRepository, CategoryRepository $categoryRepository, 
-    ManufacturerRepository $manufacturerRepository, EntityManagerInterface $em)
+    public function create(EntityManagerInterface $em, Request $request)
     {
-        $category = $categoryRepository->find(1);
-        $manufacturer = $manufacturerRepository->find(1);
-        $product = new Product();
-        $varEan = array("1547", "4875", "123456789");
-        $product->setEan($varEan);
-        $product->setName("iPhone 14");
-        $product->setPrice(987.8);
-        $product->setCategory($category);
-        $product->setManufacturer($manufacturer);
-        $em->persist($product);
-        $em->flush();
-        return $product;
+        $productDTO = new ProductDTO();
+        $form = $this->createForm(ProductFormType::class, $productDTO);
+        $form->handleRequest($request);
+        if(!$form->isSubmitted()){
+            return new Response('', Response::HTTP_BAD_REQUEST);
+        }
+        if($form->isValid()){
+            $product = Product::createFromProductDTO($productDTO);
+            $em->persist($product);
+            $em->flush();
+            return $product;
+        }
+        return $form;
+    }
+
+    /**
+     *
+     * @Rest\Post(path="/products/{id}", requirements={"id"="\d+"})
+     * @Rest\View(serializerGroups={"product"}, serializerEnableMaxDepthChecks=true)
+     */
+    public function edit(int $id, EntityManagerInterface $em, ProductRepository $productRepository, CategoryRepository $categoryRepository,
+    ManufacturerRepository $manufacturerRepository, Request $request){
+        $product = $productRepository->find($id);
+        if(!$product){
+            throw $this->createNotFoundException('Product not found');
+        }
+        $productDTO = ProductDTO::createFromProduct($product);
+        
+        $form = $this->createForm(ProductFormType::class, $productDTO);
+        $form->handleRequest($request);
+    
+        if(!$form->isSubmitted()){
+            return new Response('', Response::HTTP_BAD_REQUEST);
+        }
+        if($form->isValid()){
+            $product->setEan($productDTO->ean);
+            $product->setName($productDTO->name);
+            $product->setPrice($productDTO->price);
+            $product->setCategory($categoryRepository->find($productDTO->category->id));
+            $product->setManufacturer($manufacturerRepository->find($productDTO->manufacturer->id));
+            $em->persist($product);
+            $em->flush();
+            return $product;
+        }
+        return $form;
     }
 
 }

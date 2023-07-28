@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Form\Model\ProductDTO;
 use App\Repository\ProductRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -14,7 +15,7 @@ class Product
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(type: Types::ARRAY, nullable: true)]
+    #[ORM\Column(type: Types::SIMPLE_ARRAY, nullable: true)]
     private array $ean = [];
 
     #[ORM\Column(length: 255)]
@@ -23,11 +24,11 @@ class Product
     #[ORM\Column]
     private ?float $price = null;
 
-    #[ORM\ManyToOne(inversedBy: 'products')]
+    #[ORM\ManyToOne(inversedBy: 'products', fetch:"EAGER")]
     #[ORM\JoinColumn(nullable: false)]
     private ?Category $category = null;
 
-    #[ORM\ManyToOne(inversedBy: 'products')]
+    #[ORM\ManyToOne(inversedBy: 'products', fetch:"EAGER")]
     #[ORM\JoinColumn(nullable: false)]
     private ?Manufacturer $manufacturer = null;
 
@@ -94,5 +95,15 @@ class Product
         $this->manufacturer = $manufacturer;
 
         return $this;
+    }
+
+    public static function createFromProductDTO(ProductDTO $productDTO) : self {
+        $product = new self();
+        $product->ean = $productDTO->ean;
+        $product->name = $productDTO->name;
+        $product->price = $productDTO->price;
+        $product->category = Category::createFromCategoryDTO($productDTO->category);
+        $product->manufacturer = Manufacturer::createFromManufacturerDTO($productDTO->manufacturer);
+        return $product;
     }
 }
