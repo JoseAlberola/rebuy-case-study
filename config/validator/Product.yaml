@@ -1,6 +1,0 @@
-App\Form\Model\ProductDTO:
-    properties:
-        name: 
-            - NotBlank: ~
-        price: 
-            - NotBlank: ~

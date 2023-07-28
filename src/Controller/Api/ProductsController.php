@@ -29,6 +29,20 @@ class ProductsController extends AbstractFOSRestController
 
     /**
      *
+     * @Rest\Get(path="/products/{id}", requirements={"id"="\d+"})
+     * @Rest\View(serializerGroups={"product"}, serializerEnableMaxDepthChecks=true)
+     */
+    public function see_details(int $id, ProductRepository $productRepository)
+    {
+        $product = $productRepository->find($id);
+        if(!$product){
+            throw $this->createNotFoundException('Product not found');
+        }
+        return $product;
+    }
+
+    /**
+     *
      * @Rest\Post(path="/products")
      * @Rest\View(serializerGroups={"product"}, serializerEnableMaxDepthChecks=true)
      */
