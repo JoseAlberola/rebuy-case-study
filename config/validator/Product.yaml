@@ -1,4 +1,4 @@
-App\From\Model\ProductDTO:
+App\Form\Model\ProductDTO:
     properties:
         name: 
             - NotBlank: ~
