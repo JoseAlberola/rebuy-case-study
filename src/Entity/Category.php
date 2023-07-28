@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use App\Form\Model\CategoryDTO;
 use App\Repository\CategoryRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -71,5 +72,13 @@ class Category
         }
 
         return $this;
+    }
+
+    public static function createFromCategoryDTO(CategoryDTO $categoryDTO) : self {
+        $category = new self();
+        $category->id = $categoryDTO->id;
+        $category->name = $categoryDTO->name;
+        $category->products = $categoryDTO->products;
+        return $category;
     }
 }
