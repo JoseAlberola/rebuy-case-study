@@ -46,9 +46,9 @@ class ProductFormProcessor
             $productDTO = ProductDTO::createFromProduct($product);
         }
         
+        $content = json_decode($request->getContent(), true);
         $form = $this->formFactory->create(ProductFormType::class, $productDTO);
-        $form->handleRequest($request);
-    
+        $form->submit($content);
         if(!$form->isSubmitted()){
             return [null, new Response('Form is not submitted', Response::HTTP_BAD_REQUEST)];
         }
