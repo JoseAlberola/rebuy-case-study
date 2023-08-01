@@ -11,6 +11,7 @@ use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -82,12 +83,24 @@ class ProductsController extends AbstractFOSRestController
         if(!$form->isSubmitted()){
             return new Response('', Response::HTTP_BAD_REQUEST);
         }
+
+        $category = $categoryRepository->find($productDTO->category->id ?? 0);
+        if(!$category){
+            $errorCategory = new FormError("Category does not exist");
+            $form->addError($errorCategory);
+        }
+        $manufacturer = $manufacturerRepository->find($productDTO->manufacturer->id ?? 0);
+        if(!$manufacturer){
+            $errorManufacturer = new FormError("Manufacturer does not exist");
+            $form->addError($errorManufacturer);
+        }
+        
         if($form->isValid()){
             $product->setEan($productDTO->ean);
             $product->setName($productDTO->name);
             $product->setPrice($productDTO->price);
-            $product->setCategory($categoryRepository->find($productDTO->category->id));
-            $product->setManufacturer($manufacturerRepository->find($productDTO->manufacturer->id));
+            $product->setCategory($category);
+            $product->setManufacturer($manufacturer);
             $em->persist($product);
             $em->flush();
             return $product;
