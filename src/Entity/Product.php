@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Form\Model\ProductDTO;
 use App\Repository\ProductRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
@@ -95,15 +94,5 @@ class Product
         $this->manufacturer = $manufacturer;
 
         return $this;
-    }
-
-    public static function createFromProductDTO(ProductDTO $productDTO) : self {
-        $product = new self();
-        $product->ean = $productDTO->ean;
-        $product->name = $productDTO->name;
-        $product->price = $productDTO->price;
-        $product->category = Category::createFromCategoryDTO($productDTO->category);
-        $product->manufacturer = Manufacturer::createFromManufacturerDTO($productDTO->manufacturer);
-        return $product;
     }
 }
