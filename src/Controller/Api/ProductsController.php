@@ -2,16 +2,11 @@
 
 namespace App\Controller\Api;
 
-use App\Entity\Product;
-use App\Form\Model\ProductDTO;
-use App\Form\Type\ProductFormType;
-use App\Repository\CategoryRepository;
-use App\Repository\ManufacturerRepository;
 use App\Repository\ProductRepository;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Service\ProductFormProcessor;
 use FOS\RestBundle\Controller\AbstractFOSRestController;
 use FOS\RestBundle\Controller\Annotations as Rest;
-use Symfony\Component\Form\FormError;
+use FOS\RestBundle\View\View;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -47,65 +42,45 @@ class ProductsController extends AbstractFOSRestController
      * @Rest\Post(path="/products")
      * @Rest\View(serializerGroups={"product"}, serializerEnableMaxDepthChecks=true)
      */
-    public function create(EntityManagerInterface $em, Request $request)
+    public function create(ProductFormProcessor $productFormProcessor, Request $request)
     {
-        $productDTO = new ProductDTO();
-        $form = $this->createForm(ProductFormType::class, $productDTO);
-        $form->handleRequest($request);
-        if(!$form->isSubmitted()){
-            return new Response('', Response::HTTP_BAD_REQUEST);
-        }
-        if($form->isValid()){
-            $product = Product::createFromProductDTO($productDTO);
-            $em->persist($product);
-            $em->flush();
-            return $product;
-        }
-        return $form;
+        [$product, $error] = ($productFormProcessor)($request);
+        $statusCode = $product ? Response::HTTP_CREATED : Response::HTTP_BAD_REQUEST;
+        $data = $product ?? $error;
+        return View::create($data, $statusCode);
     }
 
     /**
      *
-     * @Rest\Post(path="/products/{id}", requirements={"id"="\d+"})
+     * @Rest\Put(path="/products/{id}", requirements={"id"="\d+"})
      * @Rest\View(serializerGroups={"product"}, serializerEnableMaxDepthChecks=true)
      */
-    public function edit(int $id, EntityManagerInterface $em, ProductRepository $productRepository, CategoryRepository $categoryRepository,
-    ManufacturerRepository $manufacturerRepository, Request $request){
+    public function edit(int $id, ProductFormProcessor $productFormProcessor, ProductRepository $productRepository, Request $request)
+    {
         $product = $productRepository->find($id);
         if(!$product){
-            throw $this->createNotFoundException('Product not found');
+            return View::create('Product not found', Response::HTTP_BAD_REQUEST);
         }
-        $productDTO = ProductDTO::createFromProduct($product);
         
-        $form = $this->createForm(ProductFormType::class, $productDTO);
-        $form->handleRequest($request);
-    
-        if(!$form->isSubmitted()){
-            return new Response('', Response::HTTP_BAD_REQUEST);
-        }
+        [$product, $error] = ($productFormProcessor)($request, $id);
+        $statusCode = $product ? Response::HTTP_CREATED : Response::HTTP_BAD_REQUEST;
+        $data = $product ?? $error;
+        return View::create($data, $statusCode);
+    }
 
-        $category = $categoryRepository->find($productDTO->category->id ?? 0);
-        if(!$category){
-            $errorCategory = new FormError("Category does not exist");
-            $form->addError($errorCategory);
+    /**
+     *
+     * @Rest\Delete(path="/products/{id}", requirements={"id"="\d+"})
+     * @Rest\View(serializerGroups={"product"}, serializerEnableMaxDepthChecks=true)
+     */
+    public function delete(int $id, ProductRepository $productRepository)
+    {
+        $product = $productRepository->find($id);
+        if(!$product){
+            return View::create('Product not found', Response::HTTP_BAD_REQUEST);
         }
-        $manufacturer = $manufacturerRepository->find($productDTO->manufacturer->id ?? 0);
-        if(!$manufacturer){
-            $errorManufacturer = new FormError("Manufacturer does not exist");
-            $form->addError($errorManufacturer);
-        }
-        
-        if($form->isValid()){
-            $product->setEan($productDTO->ean);
-            $product->setName($productDTO->name);
-            $product->setPrice($productDTO->price);
-            $product->setCategory($category);
-            $product->setManufacturer($manufacturer);
-            $em->persist($product);
-            $em->flush();
-            return $product;
-        }
-        return $form;
+        $productRepository->remove($product, true);
+        return View::create(null, Response::HTTP_NO_CONTENT);
     }
 
 }
