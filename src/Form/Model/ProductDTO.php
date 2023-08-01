@@ -6,13 +6,21 @@ use App\Entity\Product;
 use Symfony\Component\Validator\Constraints as Assert;
 
 class ProductDTO {
-    public $ean = [];
+    public ?array $ean = [];
     #[Assert\NotBlank]
     public $name;
     #[Assert\NotBlank]
     public $price;
     public $category;
     public $manufacturer;
+
+
+    public static function createEmpty(): self
+    {
+        $productDTO = new self();
+        $productDTO->ean = [];
+        return $productDTO;
+    }
 
     public static function createFromProduct(Product $product) : self {
         $dto = new self();
