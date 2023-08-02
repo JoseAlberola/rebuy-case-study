@@ -7,6 +7,7 @@ services:
         command: --default-authentication-plugin=mysql_native_password
         volumes:
             - "db_app:/var/lib/mysql"
+            - "../database/schema.sql:/docker-entrypoint-initdb.d/schema.sql"
         environment:
             MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
             MYSQL_DATABASE: ${MYSQL_DATABASE}
